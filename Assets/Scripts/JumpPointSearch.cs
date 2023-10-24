@@ -168,7 +168,7 @@ public class JumpPointSearch : MonoBehaviour
 
             for(int i = 0; i < 8; i++)
             {
-                if (!IsSameNode(parents[nowNode], nowNode) && IsParentDirection(directions[i], nowNode, parents[nowNode]))
+                if (IsParentDirection(i, nowNode, parents[nowNode]) && !IsSameNode(parents[nowNode], nowNode))
                     continue;
 
                 Node findNode = nowNode;
@@ -192,12 +192,12 @@ public class JumpPointSearch : MonoBehaviour
 
                     moveDistance++;
 
-                    int limit = i < 4 ? 4 : 8;
-                    for (int j = 0; j < limit; j++)
+                    int corner = i < 4 ? 4 : 8;
+                    for (int j = 0; j < corner; j++)
                     {
                         if (findNode.x + directions[j].x >= map.GetLength(0) || findNode.y + directions[j].y >= map.GetLength(1) || findNode.x + directions[j].x < 0 || findNode.y + directions[j].y < 0)
                             continue;
-                        if (!map[findNode.x, findNode.y])
+                        if (!map[findNode.x + directions[j].x, findNode.y + directions[j].y])
                         {
                             if (!parents.ContainsKey(findNode) || nowNode.f < parents[findNode].f)
                             {
@@ -271,18 +271,44 @@ public class JumpPointSearch : MonoBehaviour
         }
     }
 
-    bool IsParentDirection((int x, int y) direction, Node target, Node parent)
+    bool IsParentDirection(int direction, Node target, Node parent)
     {
-        if(direction.x <= 0 && target.x - parent.x >= 0)
-            return true;
-        else if(direction.x >= 0 && target.x - parent.x <= 0)
-            return true;
-
-        if (direction.y <= 0 && target.y - parent.y >= 0)
-            return true;
-        else if (direction.y >= 0 && target.y - parent.y <= 0)
-            return true;
-
-        return false;
+        switch(direction)
+        {
+            case 0:
+                if (target.x < parent.x)
+                    return false;
+                return true;
+            case 1:
+                if (target.x > parent.x)
+                    return false;
+                return true;
+            case 2:
+                if (target.y < parent.y)
+                    return false;
+                return true;
+            case 3:
+                if (target.y > parent.y)
+                    return false;
+                return true;
+            case 4:
+                if (target.x < parent.x || target.y < parent.y)
+                    return false;
+                return true;
+            case 5:
+                if (target.x < parent.x || target.y > parent.y)
+                    return false;
+                return true;
+            case 6:
+                if (target.x > parent.x || target.y < parent.y)
+                    return false;
+                return true;
+            case 7:
+                if (target.x > parent.x || target.y > parent.y)
+                    return false;
+                return true;
+            default:
+                return true;
+        }
     }
 }
