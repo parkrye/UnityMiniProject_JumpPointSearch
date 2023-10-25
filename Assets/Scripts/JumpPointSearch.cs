@@ -148,6 +148,9 @@ public class JumpPointSearch : MonoBehaviour
         priorityQueue.Enqueue(startNode, 0);
         answer.Push(startNode);
 
+        int moveDistance;
+        bool isBraked;
+
         while (priorityQueue.Count > 0)
         {
             Node nowNode = priorityQueue.Dequeue();
@@ -168,13 +171,14 @@ public class JumpPointSearch : MonoBehaviour
 
             for(int i = 0; i < 8; i++)
             {
-                if (IsParentDirection(i, nowNode, parents[nowNode]) && !IsSameNode(parents[nowNode], nowNode))
+                if (IsParentDirection(i, nowNode, parents[nowNode]))
                     continue;
 
                 Node findNode = nowNode;
 
-                int moveDistance = 0;
-                while (map[findNode.x, findNode.y])
+                moveDistance = 0;
+                isBraked = false;
+                while (map[findNode.x, findNode.y] && !isBraked)
                 {
                     findNode.x += directions[i].x;
                     findNode.y += directions[i].y;
@@ -184,10 +188,8 @@ public class JumpPointSearch : MonoBehaviour
                         findNode.x -= directions[i].x;
                         findNode.y -= directions[i].y;
 
-                        if (!parents.ContainsKey(findNode) || nowNode.f < parents[findNode].f)
-                        {
-                            AddNewNode(priorityQueue, parents, findNode, nowNode, moveDistance, endNode);
-                        }
+                        isBraked = true;
+                        break;
                     }
 
                     moveDistance++;
@@ -199,17 +201,24 @@ public class JumpPointSearch : MonoBehaviour
                             continue;
                         if (!map[findNode.x + directions[j].x, findNode.y + directions[j].y])
                         {
-                            if (!parents.ContainsKey(findNode) || nowNode.f < parents[findNode].f)
-                            {
-                                AddNewNode(priorityQueue, parents, findNode, nowNode, moveDistance, endNode);
-                            }
+                            isBraked = true;
+                            break;
                         }
                     }
                 }
 
-                if (!parents.ContainsKey(findNode) || nowNode.f < parents[findNode].f)
+                if(isBraked)
                 {
-                    AddNewNode(priorityQueue, parents, findNode, nowNode, moveDistance, endNode);
+
+                    findNode.g += moveDistance;
+                    findNode.h = GetDistance(findNode, endNode);
+                    findNode.f = findNode.g + findNode.h;
+
+                    if (!parents.ContainsKey(findNode) || findNode.f < parents[findNode].f)
+                    {
+                        parents[findNode] = nowNode;
+                        priorityQueue.Enqueue(findNode, findNode.f);
+                    }
                 }
             }
         }
@@ -219,16 +228,6 @@ public class JumpPointSearch : MonoBehaviour
 
         StartCoroutine(DrawMove(answer, true));
     }
-
-    void AddNewNode(PriorityQueue<Node, int> priorityQueue, Dictionary<Node, Node> parents, Node findNode, Node nowNode, int moveDistance, Node endNode)
-    {
-        findNode.g += moveDistance;
-        findNode.h = GetDistance(findNode, endNode);
-        findNode.f = findNode.g + findNode.h;
-        parents[findNode] = nowNode;
-        priorityQueue.Enqueue(findNode, findNode.f);
-    }
-
 
     bool IsSameNode(Node target, Node other)
     {
@@ -271,40 +270,41 @@ public class JumpPointSearch : MonoBehaviour
         }
     }
 
+    //directions = new (int, int)[8] { (-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1) };
     bool IsParentDirection(int direction, Node target, Node parent)
     {
         switch(direction)
         {
             case 0:
-                if (target.x < parent.x)
+                if (target.x <= parent.x)
                     return false;
                 return true;
             case 1:
-                if (target.x > parent.x)
+                if (target.x >= parent.x)
                     return false;
                 return true;
             case 2:
-                if (target.y < parent.y)
+                if (target.y <= parent.y)
                     return false;
                 return true;
             case 3:
-                if (target.y > parent.y)
+                if (target.y >= parent.y)
                     return false;
                 return true;
             case 4:
-                if (target.x < parent.x || target.y < parent.y)
+                if (target.x <= parent.x || target.y <= parent.y)
                     return false;
                 return true;
             case 5:
-                if (target.x < parent.x || target.y > parent.y)
+                if (target.x <= parent.x || target.y >= parent.y)
                     return false;
                 return true;
             case 6:
-                if (target.x > parent.x || target.y < parent.y)
+                if (target.x >= parent.x || target.y <= parent.y)
                     return false;
                 return true;
             case 7:
-                if (target.x > parent.x || target.y > parent.y)
+                if (target.x >= parent.x || target.y >= parent.y)
                     return false;
                 return true;
             default:
